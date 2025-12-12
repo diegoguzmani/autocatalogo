@@ -1,0 +1,99 @@
+{% extends 'inventario/base.html' %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-6">
+        
+        <div class="card shadow border-0">
+            <div class="card-header bg-dark text-white text-center py-3">
+                <h3 class="mb-0">🧮 Calculadora BCV</h3>
+                <small class="text-white-50">Conversión instantánea</small>
+            </div>
+            <div class="card-body p-4 bg-light">
+                
+                <!-- DÓLAR -->
+                <div class="mb-4">
+                    <label class="form-label text-success fw-bold fs-5">Dólar ($)</label>
+                    <div class="input-group input-group-lg">
+                        <span class="input-group-text bg-success text-white border-success">$</span>
+                        <input type="number" id="calc-usd" class="form-control border-success fw-bold" placeholder="0" step="0.01">
+                    </div>
+                    <div class="form-text text-end">Tasa: {{ config.tasa_dolar|floatformat:2 }}</div>
+                </div>
+
+                <!-- EURO -->
+                <div class="mb-4">
+                    <label class="form-label text-primary fw-bold fs-5">Euro (€)</label>
+                    <div class="input-group input-group-lg">
+                        <span class="input-group-text bg-primary text-white border-primary">€</span>
+                        <input type="number" id="calc-eur" class="form-control border-primary fw-bold" placeholder="0" step="0.01">
+                    </div>
+                    <div class="form-text text-end">Tasa: {{ config.tasa_euro|floatformat:2 }}</div>
+                </div>
+
+                <!-- BOLÍVARES -->
+                <div class="mb-3">
+                    <label class="form-label text-dark fw-bold fs-5">Bolívares (Bs)</label>
+                    <div class="input-group input-group-lg">
+                        <span class="input-group-text bg-secondary text-white border-secondary">Bs</span>
+                        <input type="number" id="calc-bs" class="form-control border-secondary fw-bold" placeholder="0" step="0.01">
+                    </div>
+                </div>
+
+                <hr>
+                <div class="d-grid">
+                    <button type="button" class="btn btn-outline-danger" onclick="limpiarCampos()">🗑️ Borrar Todo</button>
+                </div>
+
+            </div>
+        </div>
+
+    </div>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Obtenemos las tasas desde Django
+        const tasaUSD = parseFloat("{{ config.tasa_dolar }}".replace(',', '.'));
+        const tasaEUR = parseFloat("{{ config.tasa_euro }}".replace(',', '.'));
+
+        const inputUSD = document.getElementById('calc-usd');
+        const inputEUR = document.getElementById('calc-eur');
+        const inputBS = document.getElementById('calc-bs');
+
+        // Función para calcular
+        function calcular(origen) {
+            let valUSD = parseFloat(inputUSD.value) || 0;
+            let valEUR = parseFloat(inputEUR.value) || 0;
+            let valBS = parseFloat(inputBS.value) || 0;
+
+            if (origen === 'usd') {
+                let bs = valUSD * tasaUSD;
+                inputBS.value = bs > 0 ? bs.toFixed(2) : '';
+                if (tasaEUR > 0) inputEUR.value = bs > 0 ? (bs / tasaEUR).toFixed(2) : '';
+            } 
+            else if (origen === 'eur') {
+                let bs = valEUR * tasaEUR;
+                inputBS.value = bs > 0 ? bs.toFixed(2) : '';
+                if (tasaUSD > 0) inputUSD.value = bs > 0 ? (bs / tasaUSD).toFixed(2) : '';
+            }
+            else if (origen === 'bs') {
+                if (tasaUSD > 0) inputUSD.value = valBS > 0 ? (valBS / tasaUSD).toFixed(2) : '';
+                if (tasaEUR > 0) inputEUR.value = valBS > 0 ? (valBS / tasaEUR).toFixed(2) : '';
+            }
+        }
+
+        // Eventos
+        inputUSD.addEventListener('input', () => calcular('usd'));
+        inputEUR.addEventListener('input', () => calcular('eur'));
+        inputBS.addEventListener('input', () => calcular('bs'));
+
+        // Función global para limpiar
+        window.limpiarCampos = function() {
+            inputUSD.value = '';
+            inputEUR.value = '';
+            inputBS.value = '';
+        }
+    });
+</script>
+{% endblock %}

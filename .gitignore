@@ -1,0 +1,17 @@
+# Ignorar base de datos local (se crea nueva en producción)
+db.sqlite3
+
+# Ignorar carpeta de librerías virtuales (pesa mucho y no sirve en otros PC)
+venv/
+env/
+.env
+
+# Ignorar archivos compilados de Python
+__pycache__/
+*.pyc
+
+# Ignorar configuraciones de VS Code
+.vscode/
+
+# Opcional: Si NO quieres que tus precios sean públicos en GitHub
+# documentos/

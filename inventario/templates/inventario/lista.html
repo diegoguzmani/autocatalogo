@@ -1,0 +1,86 @@
+{% extends 'inventario/base.html' %}
+{% load estilos_extras %}  <!-- AGREGA ESTA LÍNEA -->
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        
+        <!-- Tarjeta de Tasa BCV -->
+        <div class="card bg-white shadow-sm mb-4 border-success">
+            <div class="card-body p-2 d-flex justify-content-between align-items-center">
+                <div>
+                    <small class="text-muted">Tasa BCV Oficial</small>
+                    <h4 class="mb-0 text-success fw-bold">Bs. {{ config.tasa_dolar|floatformat:2 }}</h4>
+                    <small style="font-size: 0.7rem;">{{ config.ultima_actualizacion|date:"d/m/Y H:i" }}</small>
+                </div>
+                <!-- Botón para actualizar tasa manualmente usando tu script -->
+                <form method="post">
+                    {% csrf_token %}
+                    <button type="submit" name="btn_actualizar_bcv" class="btn btn-outline-success btn-sm">
+                        🔄 Actualizar
+                    </button>
+                </form>
+            </div>
+        </div>
+
+        <!-- Buscador -->
+        <form method="GET" class="mb-3">
+            <div class="input-group input-group-lg">
+                <input type="text" name="q" class="form-control" placeholder="Buscar..." value="{{ busqueda|default:'' }}">
+                <button class="btn btn-primary" type="submit">🔍</button>
+            </div>
+        </form>
+
+        <!-- Resultados -->
+        <div class="list-group">
+            {% for p in productos %}
+            <div class="list-group-item list-group-item-action p-3 mb-2 shadow-sm rounded border-0">
+                <div class="d-flex w-100 justify-content-between align-items-start">
+                    
+                    
+                    <!-- MARCA: Grande, Colorida y Dinámica -->
+                    <!-- 1. Calculamos el color de fondo con |color_marca -->
+                    <!-- 2. Calculamos el color de texto con |texto_color -->
+                    {% with color_bg=p.marca|color_marca %}
+                    <span class="badge bg-{{ color_bg }} {{ color_bg|texto_color }} fs-6 shadow-sm">
+                        {{ p.marca }}
+                    </span>
+                    {% endwith %}
+
+                    <!-- CODIGO (Más pequeño ahora para dar prioridad a la marca) -->
+                    <h6 class="text-muted mb-0 pt-1">{{ p.codigo }}</h6>
+                </div>
+                
+                <!-- Nombre del producto un poco más grande -->
+                <p class="mb-2 mt-2 fs-5 fw-normal">{{ p.nombre }}</p>
+
+                <div class="row mt-2 align-items-end">
+           
+                    
+                    <!-- Columna Precios -->
+                    <div class="col-12 text-end">
+                        <!-- Precio Cash -->
+                        <div class="d-block">
+                            <span class="badge bg-success bg-opacity-10 text-success border border-success px-2">
+                                Cash/Zelle: ${{ p.precio_cash }}
+                            </span>
+                        </div>
+                        
+                        <!-- Precio Bolívares (CORREGIDO) -->
+                        <div class="mt-1">
+                            <span class="fs-5 fw-bold text-dark">
+                                <!-- Usamos la nueva propiedad .precio_en_bs -->
+                                Bs. {{ p.precio_en_bs|formato_ve }}
+                            </span>
+                            <div class="text-muted" style="font-size: 0.7rem;">
+                                (Ref. ${{ p.precio_base_bs }} x Tasa)
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+{% endblock %}

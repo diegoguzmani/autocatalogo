@@ -1,0 +1,30 @@
+{% extends 'inventario/base.html' %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-6">
+        <h3 class="mb-4">Panel de Administración</h3>
+
+        <!-- Carga de Excel Local -->
+        <div class="card mb-4">
+            <div class="card-header bg-primary text-white">📂 Inventario Local</div>
+            <div class="card-body">
+                <p class="text-muted">
+                    El sistema buscará el archivo en: <br>
+                    <code>/documentos/lista_precios.xlsx</code>
+                </p>
+                <form method="post">
+                    {% csrf_token %}
+                    <!-- OJO AQUI ABAJO: name="btn_excel_local" -->
+                    <button type="submit" name="btn_excel_local" class="btn btn-primary w-100 py-2">
+                        📥 Leer archivo y Actualizar Precios
+                    </button>
+                </form>
+            </div>
+        </div>
+
+        <!-- Actualización de Tasa -->
+        <!-- (Aquí puedes dejar tu lógica de tasa BCV o Manual si la usas) -->
+    </div>
+</div>
+{% endblock %}

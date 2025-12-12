@@ -1,0 +1,8 @@
+Django
+pandas
+openpyxl
+curl_cffi
+beautifulsoup4
+gunicorn
+whitenoise
+tzdata
