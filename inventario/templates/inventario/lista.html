@@ -159,14 +159,53 @@
                     <button class="btn btn-outline-primary rounded-circle" style="width:40px; height:40px;" onclick="cambiarPrecioFiltro(1)">➕</button>
                 </div>
 
-                <!-- 3. OPCIÓN CASHEA -->
-                <div class="bg-white p-3 rounded-3 shadow-sm mb-3 border border-info border-opacity-25">
-                    <div class="form-check form-switch">
+                <!-- 3. OPCIÓN CASHEA AVANZADA -->
+                <div class="bg-white p-3 rounded-3 shadow-sm mb-3 border border-info border-opacity-50" style="background-color: #f0faff !important;">
+                    
+                    <!-- Interruptor Principal -->
+                    <div class="form-check form-switch mb-0">
                         <input class="form-check-input" type="checkbox" id="chkCashea" onchange="calcularTotalAceite()">
                         <label class="form-check-label fw-bold text-dark d-flex align-items-center gap-2" for="chkCashea">
                             <span class="badge bg-warning text-dark">CASHEA</span>
-                            <small class="text-muted fw-normal">(Agrega IVA 16%)</small>
+                            <small class="text-muted fw-normal">(IVA 16% + Financiamiento)</small>
                         </label>
+                    </div>
+
+                    <!-- PANEL DE DETALLES (Oculto por defecto) -->
+                    <div id="panelCasheaDetalles" style="display:none;" class="mt-3 pt-3 border-top border-info border-opacity-25">
+                        
+                        <label class="fw-bold text-info small mb-2">PORCENTAJE DE INICIAL (%)</label>
+                        
+                        <!-- Control de Porcentaje -->
+                        <div class="d-flex align-items-center mb-3 gap-2">
+                            <button class="btn btn-outline-info rounded-circle" style="width:38px; height:38px;" onclick="cambiarPorcentaje(-10)">-</button>
+                            
+                            <!-- Input numérico para permitir decimales personalizados -->
+                            <div class="input-group">
+                                <input type="number" id="txtPorcentaje" class="form-control text-center fw-bold text-dark fs-5 border-info" 
+                                       value="40" step="any" oninput="calcularTotalAceite()">
+                                <span class="input-group-text bg-white border-info text-info fw-bold">%</span>
+                            </div>
+
+                            <button class="btn btn-outline-info rounded-circle" style="width:38px; height:38px;" onclick="cambiarPorcentaje(10)">+</button>
+                        </div>
+
+                        <!-- Resultado de la Inicial -->
+                        <div class="alert alert-info mb-0 p-2 text-center border-0 bg-info bg-opacity-10">
+                            <small class="text-uppercase fw-bold text-info" style="font-size: 0.7rem;">Inicial a Pagar</small>
+                            <div class="d-flex justify-content-center align-items-center gap-3 mt-1">
+                                <div>
+                                    <span class="text-muted small">$</span>
+                                    <span class="h4 fw-bold text-dark mb-0" id="resInicialUSD">0</span>
+                                </div>
+                                <div class="vr opacity-50"></div>
+                                <div>
+                                    <span class="text-muted small">Bs</span>
+                                    <span class="h4 fw-bold text-dark mb-0" id="resInicialBS">0</span>
+                                </div>
+                            </div>
+                        </div>
+
                     </div>
                 </div>
 
@@ -193,11 +232,9 @@
     </div>
 </div>
 
-<!-- Pon esto al final de inventario/templates/inventario/lista.html -->
 <script>
     // --- VARIABLES GLOBALES ---
     let precioAceiteActual = 0;
-    // Leemos la tasa (asegurando punto decimal)
     let tasaCambio = parseFloat("{{ config.tasa_dolar }}".replace(',', '.')) || 0;
     let modalAceite = null;
 
@@ -208,83 +245,119 @@
         }
     });
 
-    // --- FUNCIÓN 1: CALCULAR TOTALES ---
+    // --- FUNCIÓN PRINCIPAL DE CÁLCULO ---
     function calcularTotalAceite() {
+        // 1. Obtener Elementos
         let elLitros = document.getElementById('txtLitros');
         let elPrecioFiltro = document.getElementById('txtPrecioFiltro');
         let elCheckCashea = document.getElementById('chkCashea');
-        
-        if (!elLitros || !elPrecioFiltro) return;
+        let elPanelCashea = document.getElementById('panelCasheaDetalles');
+        let elPorcentaje = document.getElementById('txtPorcentaje');
 
-        // OJO: Ahora usamos .innerText porque es un <span>, no un input
+        if (!elLitros) return;
+
+        // 2. Leer Valores Básicos
         let litros = parseInt(elLitros.innerText) || 4;
-        let precioFiltro = parseFloat(elPrecioFiltro.innerText) || 0; 
+        let precioFiltro = parseFloat(elPrecioFiltro.innerText) || 0;
         let usarCashea = elCheckCashea.checked;
 
-        // Cálculos
+        // 3. Calcular Base
         let subtotalAceite = precioAceiteActual * litros;
         let totalBase = subtotalAceite + precioFiltro;
-
         let totalFinalUSD = totalBase;
-        let divIva = document.getElementById('lblIvaUSD');
-        
+
+        // 4. Lógica CASHEA
         if (usarCashea) {
-            totalFinalUSD = totalBase * 1.16; // +16% IVA
+            // Mostrar panel
+            elPanelCashea.style.display = 'block';
+            
+            // Aplicar IVA 16% al total
+            totalFinalUSD = totalBase * 1.16;
+
+            // Calcular Inicial
+            let porcentaje = parseFloat(elPorcentaje.value) || 40;
+            let montoInicialUSD = totalFinalUSD * (porcentaje / 100);
+            let montoInicialBS = montoInicialUSD * tasaCambio;
+
+            // Mostrar resultados de la inicial
+            document.getElementById('resInicialUSD').innerText = montoInicialUSD.toFixed(2);
+            document.getElementById('resInicialBS').innerText = formatearBs(montoInicialBS);
+            
+            // Mostrar etiqueta de IVA en el total general
+            let divIva = document.getElementById('lblIvaUSD');
             if(divIva) divIva.style.display = 'block';
+
         } else {
+            // Ocultar panel
+            elPanelCashea.style.display = 'none';
+            let divIva = document.getElementById('lblIvaUSD');
             if(divIva) divIva.style.display = 'none';
         }
 
+        // 5. Calcular Total General en Bs
         let totalFinalBS = totalFinalUSD * tasaCambio;
 
-        // Mostrar Resultados
+        // 6. Actualizar Totales Generales
         document.getElementById('resTotalUSD').innerText = '$' + totalFinalUSD.toFixed(2);
-        
-        document.getElementById('resTotalBS').innerText = 'Bs ' + totalFinalBS.toLocaleString('es-VE', {
-            minimumFractionDigits: 2, 
-            maximumFractionDigits: 2
-        });
+        document.getElementById('resTotalBS').innerText = 'Bs ' + formatearBs(totalFinalBS);
     }
 
-    // --- FUNCIÓN 2: ABRIR EL MODAL ---
+    // --- HELPER: Formato Venezolano ---
+    function formatearBs(valor) {
+        return valor.toLocaleString('es-VE', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+    }
+
+    // --- ABRIR MODAL ---
     function abrirCalculadoraAceite(elemento) {
         let nombre = elemento.getAttribute('data-nombre');
         let precio = elemento.getAttribute('data-precio');
-
         precioAceiteActual = parseFloat(precio);
         
         document.getElementById('lblProductoAceite').innerText = nombre;
         document.getElementById('lblPrecioLitro').innerText = precioAceiteActual.toFixed(2);
         
-        // --- VALORES POR DEFECTO ---
+        // Resetear valores
         document.getElementById('txtLitros').innerText = "4"; 
-        document.getElementById('txtPrecioFiltro').innerText = "6"; // Empieza en $6
+        document.getElementById('txtPrecioFiltro').innerText = "6"; 
         document.getElementById('chkCashea').checked = false;
+        document.getElementById('txtPorcentaje').value = "40"; // Default 40%
         
         calcularTotalAceite();
-        
         if (modalAceite) modalAceite.show();
     }
 
-    // --- FUNCIÓN 3: CAMBIAR LITROS ---
+    // --- CONTROL DE LITROS ---
     function cambiarLitros(delta) {
         let span = document.getElementById('txtLitros');
         let val = parseInt(span.innerText) + delta;
-        if (val < 1) val = 1;   // Mínimo 1 litro
-        if (val > 16) val = 16; // Máximo razonable
+        if (val < 1) val = 1;
+        if (val > 16) val = 16;
         span.innerText = val;
         calcularTotalAceite();
     }
 
-    // --- FUNCIÓN 4: CAMBIAR PRECIO FILTRO (NUEVA) ---
+    // --- CONTROL DE PRECIO FILTRO ---
     function cambiarPrecioFiltro(delta) {
         let span = document.getElementById('txtPrecioFiltro');
         let val = parseInt(span.innerText) + delta;
-        
-        if (val < 0) val = 0;   // No precios negativos
-        // Puedes poner un máximo si quieres (ej: if (val > 50) val = 50;)
-        
+        if (val < 0) val = 0;
         span.innerText = val;
+        calcularTotalAceite();
+    }
+
+    // --- CONTROL DE PORCENTAJE CASHEA ---
+    function cambiarPorcentaje(delta) {
+        let input = document.getElementById('txtPorcentaje');
+        let val = parseFloat(input.value) || 0;
+        
+        // Sumamos y redondeamos para evitar errores de flotantes (ej: 30.0000004)
+        val = Math.round((val + delta) * 10) / 10;
+
+        // Límites
+        if (val < 20) val = 20;
+        if (val > 80) val = 80;
+
+        input.value = val;
         calcularTotalAceite();
     }
 </script>
