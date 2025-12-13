@@ -229,8 +229,15 @@
 
             </div>
             
-            <div class="modal-footer border-0 bg-light justify-content-center">
-                <button type="button" class="btn btn-dark rounded-pill px-4" data-bs-dismiss="modal">Listo / Cerrar</button>
+            <div class="modal-footer border-0 bg-light justify-content-center gap-2">
+                <button type="button" class="btn btn-outline-secondary rounded-pill px-4" data-bs-dismiss="modal">
+                    Cerrar
+                </button>
+                
+                <!-- BOTÓN COPIAR -->
+                <button type="button" class="btn btn-primary rounded-pill px-4 fw-bold d-flex align-items-center gap-2" onclick="copiarPresupuesto(this)">
+                    <span>📋</span> <span id="btnTextoCopiar">Copiar Presupuesto</span>
+                </button>
             </div>
         </div>
     </div>
@@ -365,6 +372,56 @@
 
         input.value = val;
         calcularTotalAceite();
+    }
+
+    // --- FUNCIÓN 5: COPIAR PRESUPUESTO ---
+    function copiarPresupuesto(btnElement) {
+        // 1. Recopilar Datos
+        let nombre = document.getElementById('lblProductoAceite').innerText;
+        let marca = document.getElementById('lblMarcaAceite').innerText;
+        let litros = document.getElementById('txtLitros').innerText;
+        let totalUSD = document.getElementById('resTotalUSD').innerText; // Ya trae el signo $
+        
+        // 2. Construir el Texto Base
+        let texto = `Hola, aquí tienes el presupuesto:\n`;
+        texto += `Aceite: ${marca} ${nombre} (${litros} Lts) +\n`;
+        texto += `Filtro de Aceite\n`;
+        texto += `Total: ${totalUSD}\n`;
+
+        // 3. Agregar línea de CASHEA si está activo
+        if (document.getElementById('chkCashea').checked) {
+            let porcentaje = document.getElementById('txtPorcentaje').value;
+            let inicialRef = document.getElementById('resInicialUSD').innerText;
+            texto += `Cashea (Inicial: ${porcentaje}%): $${inicialRef}\n`;
+        }
+
+        // 4. Frase final de Marketing
+        texto += `Con la compra del combo el servicio es totalmente gratis 🔧`;
+
+        // 5. Copiar al Portapapeles
+        // Usamos la API moderna del navegador
+        navigator.clipboard.writeText(texto).then(() => {
+            
+            // FEEDBACK VISUAL (Cambiar texto del botón por 2 segundos)
+            let spanTexto = document.getElementById('btnTextoCopiar');
+            let textoOriginal = spanTexto.innerText;
+            
+            // Cambiar a "Copiado!" y poner verde
+            spanTexto.innerText = "¡Copiado!";
+            btnElement.classList.remove('btn-primary');
+            btnElement.classList.add('btn-success');
+
+            // Volver a la normalidad después de 2 seg
+            setTimeout(() => {
+                spanTexto.innerText = textoOriginal;
+                btnElement.classList.remove('btn-success');
+                btnElement.classList.add('btn-primary');
+            }, 2000);
+
+        }).catch(err => {
+            console.error('Error al copiar: ', err);
+            alert("No se pudo copiar automáticamente. Intenta seleccionando el texto.");
+        });
     }
 </script>
 {% endblock %}
