@@ -20,11 +20,28 @@
         </div>
 
         <!-- Buscador Moderno -->
-        <form method="GET" class="mb-4">
+        <!-- Buscador Moderno e Interactivo -->
+        <form method="GET" class="mb-4" id="searchForm">
             <div class="input-group shadow-sm rounded-pill overflow-hidden border-0 bg-white p-1">
-                <span class="input-group-text bg-white border-0 ps-3">🔍</span>
-                <input type="text" name="q" class="form-control border-0 bg-white shadow-none" 
-                       placeholder="Buscar producto..." value="{{ busqueda|default:'' }}" autocomplete="off">
+                
+                <!-- Botón Lupa (Submit) -->
+                <button class="btn btn-white border-0 text-muted ps-3" type="submit" title="Buscar">
+                    🔍
+                </button>
+
+                <!-- Input de Texto -->
+                <input type="text" name="q" id="searchInput" 
+                       class="form-control border-0 bg-white shadow-none" 
+                       placeholder="Buscar repuesto..." 
+                       value="{{ busqueda|default:'' }}" 
+                       autocomplete="off">
+
+                <!-- Botón X (Borrar) - Oculto por defecto -->
+                <button type="button" id="btnClear" class="btn btn-white border-0 text-muted pe-3" 
+                        style="display:none;" title="Borrar búsqueda">
+                    ✕
+                </button>
+
             </div>
         </form>
 
@@ -51,21 +68,24 @@
                         {{ p.nombre }}
                     </h5>
 
-                    <!-- BOTÓN CALCULADORA DE ACEITE -->
-                    {% if p.nombre|es_aceite_litro %}
-                    <!-- 
-                        USAMOS data-nombre Y data-precio.
-                        Esto elimina el error rojo y es más seguro.
-                    -->
-                    <button class="btn btn-sm btn-outline-primary rounded-pill w-100 mb-2 fw-bold d-flex align-items-center justify-content-center gap-2" 
+                    <!-- BOTÓN DE CÁLCULO (Universal) -->
+                    {% with es_aceite=p.nombre|es_aceite_litro %}
+                    <button class="btn btn-sm rounded-pill w-100 mb-2 fw-bold d-flex align-items-center justify-content-center gap-2 
+                                   {% if es_aceite %}btn-outline-primary{% else %}btn-outline-dark{% endif %}" 
                             type="button"
                             data-nombre="{{ p.nombre }}"
                             data-marca="{{ p.marca }}"
                             data-precio="{{ p.precio_base_bs|stringformat:'f' }}"
-                            onclick="abrirCalculadoraAceite(this)">
-                        🛢️ Calcular Cambio de Aceite
+                            data-es-aceite="{{ es_aceite|yesno:'true,false' }}"
+                            onclick="abrirCalculadoraUniversal(this)">
+                        
+                        {% if es_aceite %}
+                            🛢️ Calcular Cambio de Aceite
+                        {% else %}
+                            💳 Calcular Cashea / Financiamiento
+                        {% endif %}
                     </button>
-                    {% endif %}
+                    {% endwith %}
 
                     <hr class="opacity-10 my-2">
 
@@ -120,62 +140,69 @@
     </div>
 </div>
 
-<!-- MODAL CALCULADORA DE ACEITE -->
+<!-- MODAL CALCULADORA UNIVERSAL (ACEITE + CASHEA) -->
 <div class="modal fade" id="modalAceite" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content border-0 shadow rounded-4">
             
-            <!-- Encabezado con degradado suave -->
+            <!-- Encabezado Moderno con Degradado -->
             <div class="modal-header border-0 text-white" style="background: linear-gradient(135deg, #0d6efd, #0dcaf0);">
                 <div>
-                    <!-- AQUÍ ESTÁ LA MARCA -->
-                    <span id="lblMarcaAceite" class="badge bg-white text-primary shadow-sm mb-1 text-uppercase">MARCA</span>
+                    <!-- Etiqueta de MARCA -->
+                    <span id="lblMarcaAceite" class="badge bg-white text-primary shadow-sm mb-1 text-uppercase fw-bold">MARCA</span>
                     
-                    <h5 class="modal-title fw-bold" id="lblProductoAceite">Aceite</h5>
-                    <small class="opacity-75">Precio Base/Litro: $<span id="lblPrecioLitro">0</span></small>
+                    <!-- Nombre del Producto -->
+                    <h5 class="modal-title fw-bold" id="lblProductoAceite">Producto</h5>
+                    
+                    <!-- Precio Base -->
+                    <small class="opacity-75">
+                        <span id="lblLabelPrecio">Precio Base:</span> 
+                        $<span id="lblPrecioLitro">0</span>
+                    </small>
                 </div>
                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
             </div>
 
             <div class="modal-body bg-light">
                 
-                <!-- 1. SELECTOR DE LITROS (Stepper) -->
-                <label class="fw-bold text-muted small mb-1">CANTIDAD DE LITROS</label>
-                <div class="bg-white p-2 rounded-3 shadow-sm mb-3 d-flex justify-content-between align-items-center">
-                    <button class="btn btn-outline-secondary rounded-circle" style="width:40px; height:40px;" onclick="cambiarLitros(-1)">➖</button>
-                    <span class="h2 mb-0 fw-bold text-dark" id="txtLitros">4</span>
-                    <button class="btn btn-outline-primary rounded-circle" style="width:40px; height:40px;" onclick="cambiarLitros(1)">➕</button>
-                </div>
-
-                <!-- 2. PRECIO DEL FILTRO -->
-                <label class="fw-bold text-muted small mb-1">PRECIO FILTRO ($)</label>
-                <div class="bg-white p-2 rounded-3 shadow-sm mb-3 d-flex justify-content-between align-items-center">
-                    <!-- Botón Restar -->
-                    <button class="btn btn-outline-secondary rounded-circle" style="width:40px; height:40px;" onclick="cambiarPrecioFiltro(-1)">➖</button>
+                <!-- SECCIÓN 1: CONTROLES DE ACEITE (Ocultable por JS) -->
+                <div id="seccionAceiteInputs">
                     
-                    <!-- Visualizador del Precio -->
-                    <div class="d-flex align-items-center">
-                        <span class="text-muted me-1 fs-5">$</span>
-                        <span class="h2 mb-0 fw-bold text-dark" id="txtPrecioFiltro">6</span>
+                    <!-- Selector de LITROS -->
+                    <label class="fw-bold text-muted small mb-1">CANTIDAD DE LITROS</label>
+                    <div class="bg-white p-2 rounded-3 shadow-sm mb-3 d-flex justify-content-between align-items-center">
+                        <button class="btn btn-outline-secondary rounded-circle" style="width:40px; height:40px;" onclick="cambiarLitros(-1)">➖</button>
+                        <span class="h2 mb-0 fw-bold text-dark" id="txtLitros">4</span>
+                        <button class="btn btn-outline-primary rounded-circle" style="width:40px; height:40px;" onclick="cambiarLitros(1)">➕</button>
                     </div>
-                    
-                    <!-- Botón Sumar -->
-                    <button class="btn btn-outline-primary rounded-circle" style="width:40px; height:40px;" onclick="cambiarPrecioFiltro(1)">➕</button>
-                </div>
 
-                <!-- 3. OPCIÓN CASHEA AVANZADA -->
+                    <!-- Selector PRECIO FILTRO -->
+                    <label class="fw-bold text-muted small mb-1">PRECIO FILTRO ($)</label>
+                    <div class="bg-white p-2 rounded-3 shadow-sm mb-3 d-flex justify-content-between align-items-center">
+                        <button class="btn btn-outline-secondary rounded-circle" style="width:40px; height:40px;" onclick="cambiarPrecioFiltro(-1)">➖</button>
+                        <div class="d-flex align-items-center">
+                            <span class="text-muted me-1 fs-5">$</span>
+                            <span class="h2 mb-0 fw-bold text-dark" id="txtPrecioFiltro">6</span>
+                        </div>
+                        <button class="btn btn-outline-primary rounded-circle" style="width:40px; height:40px;" onclick="cambiarPrecioFiltro(1)">➕</button>
+                    </div>
+
+                </div>
+                <!-- FIN SECCIÓN ACEITE -->
+
+                <!-- SECCIÓN 2: CASHEA / FINANCIAMIENTO (Visible Siempre) -->
                 <div class="bg-white p-3 rounded-3 shadow-sm mb-3 border border-info border-opacity-50" style="background-color: #f0faff !important;">
                     
-                    <!-- Interruptor Principal -->
+                    <!-- Interruptor Cashea -->
                     <div class="form-check form-switch mb-0">
-                        <input class="form-check-input" type="checkbox" id="chkCashea" onchange="calcularTotalAceite()">
+                        <input class="form-check-input" type="checkbox" id="chkCashea" onchange="calcularTotal()">
                         <label class="form-check-label fw-bold text-dark d-flex align-items-center gap-2" for="chkCashea">
-                            <span class="badge bg-warning text-dark">CASHEA</span>
-                            <small class="text-muted fw-normal">(IVA 16% + Financiamiento)</small>
+                            <span class="badge bg-info text-dark">CASHEA</span>
+                            <small class="text-muted fw-normal">(IVA 16% + Inicial)</small>
                         </label>
                     </div>
 
-                    <!-- PANEL DE DETALLES (Oculto por defecto) -->
+                    <!-- Panel de Detalles Cashea (Oculto por defecto) -->
                     <div id="panelCasheaDetalles" style="display:none;" class="mt-3 pt-3 border-top border-info border-opacity-25">
                         
                         <label class="fw-bold text-info small mb-2">PORCENTAJE DE INICIAL (%)</label>
@@ -184,10 +211,10 @@
                         <div class="d-flex align-items-center mb-3 gap-2">
                             <button class="btn btn-outline-info rounded-circle" style="width:38px; height:38px;" onclick="cambiarPorcentaje(-10)">-</button>
                             
-                            <!-- Input numérico para permitir decimales personalizados -->
+                            <!-- Input numérico -->
                             <div class="input-group">
                                 <input type="number" id="txtPorcentaje" class="form-control text-center fw-bold text-dark fs-5 border-info" 
-                                       value="40" step="any" oninput="calcularTotalAceite()">
+                                       value="40" step="any" oninput="calcularTotal()">
                                 <span class="input-group-text bg-white border-info text-info fw-bold">%</span>
                             </div>
 
@@ -213,13 +240,13 @@
                     </div>
                 </div>
 
-                <!-- RESULTADOS -->
+                <!-- RESULTADOS FINALES -->
                 <hr>
                 <div class="row text-center g-2">
                     <div class="col-6">
                         <small class="text-muted fw-bold">TOTAL ($)</small>
                         <div class="h2 fw-bold text-success mb-0" id="resTotalUSD">0</div>
-                        <small class="text-danger" id="lblIvaUSD" style="display:none; font-size: 0.7rem;">+ IVA INCLUIDO</small>
+                        <small class="text-danger fw-bold" id="lblIvaUSD" style="display:none; font-size: 0.7rem;">+ IVA INCLUIDO</small>
                     </div>
                     <div class="col-6 border-start">
                         <small class="text-muted fw-bold">TOTAL (Bs)</small>
@@ -229,6 +256,7 @@
 
             </div>
             
+            <!-- PIE DEL MODAL -->
             <div class="modal-footer border-0 bg-light justify-content-center gap-2">
                 <button type="button" class="btn btn-outline-secondary rounded-pill px-4" data-bs-dismiss="modal">
                     Cerrar
@@ -245,9 +273,10 @@
 
 <script>
     // --- VARIABLES GLOBALES ---
-    let precioAceiteActual = 0;
+    let precioProductoActual = 0;
     let tasaCambio = parseFloat("{{ config.tasa_dolar }}".replace(',', '.')) || 0;
     let modalAceite = null;
+    let esProductoAceite = false; // Bandera para saber qué tipo de producto es
 
     document.addEventListener('DOMContentLoaded', function() {
         const modalElement = document.getElementById('modalAceite');
@@ -256,9 +285,51 @@
         }
     });
 
-    // --- FUNCIÓN PRINCIPAL DE CÁLCULO ---
-    function calcularTotalAceite() {
-        // 1. Obtener Elementos
+    // --- 1. ABRIR MODAL (Lógica Universal) ---
+    function abrirCalculadoraUniversal(elemento) {
+        // Leer datos
+        let nombre = elemento.getAttribute('data-nombre');
+        let precio = elemento.getAttribute('data-precio');
+        let marca = elemento.getAttribute('data-marca');
+        
+        // Detectar si es aceite (viene como string "true" o "false")
+        esProductoAceite = elemento.getAttribute('data-es-aceite') === 'true';
+
+        precioProductoActual = parseFloat(precio);
+        
+        // Llenar UI Básica
+        document.getElementById('lblProductoAceite').innerText = nombre;
+        document.getElementById('lblMarcaAceite').innerText = marca;
+        
+        // Cambiar etiqueta de precio según el tipo
+        let labelPrecio = esProductoAceite ? "Precio Base/Litro:" : "Precio Base:";
+        document.getElementById('lblPrecioLitro').parentElement.childNodes[0].nodeValue = labelPrecio + " $";
+        document.getElementById('lblPrecioLitro').innerText = precioProductoActual.toFixed(2);
+        
+        // MOSTRAR U OCULTAR CONTROLES DE ACEITE
+        let divControlesAceite = document.getElementById('seccionAceiteInputs');
+        if (esProductoAceite) {
+            divControlesAceite.style.display = 'block';
+            document.getElementById('txtLitros').innerText = "4"; 
+            document.getElementById('txtPrecioFiltro').innerText = "6"; 
+        } else {
+            divControlesAceite.style.display = 'none';
+            document.getElementById('txtLitros').innerText = "1"; // Cantidad base 1
+            document.getElementById('txtPrecioFiltro').innerText = "0"; // Sin filtro
+        }
+        
+        // Resetear Cashea
+        document.getElementById('chkCashea').checked = false;
+        document.getElementById('txtPorcentaje').value = "40"; 
+        
+        calcularTotal();
+        if (modalAceite) modalAceite.show();
+    }
+
+    // --- 2. CÁLCULO UNIFICADO ---
+    function calcularTotalAceite() { calcularTotal(); } // Alias por compatibilidad
+    
+    function calcularTotal() {
         let elLitros = document.getElementById('txtLitros');
         let elPrecioFiltro = document.getElementById('txtPrecioFiltro');
         let elCheckCashea = document.getElementById('chkCashea');
@@ -267,160 +338,144 @@
 
         if (!elLitros) return;
 
-        // 2. Leer Valores Básicos
-        let litros = parseInt(elLitros.innerText) || 4;
-        let precioFiltro = parseFloat(elPrecioFiltro.innerText) || 0;
+        // Si NO es aceite, la cantidad es 1 y el filtro 0 (aunque estén ocultos)
+        let cantidad = esProductoAceite ? (parseInt(elLitros.innerText) || 0) : 1;
+        let precioExtra = esProductoAceite ? (parseFloat(elPrecioFiltro.innerText) || 0) : 0;
         let usarCashea = elCheckCashea.checked;
 
-        // 3. Calcular Base
-        let subtotalAceite = precioAceiteActual * litros;
-        let totalBase = subtotalAceite + precioFiltro;
+        // Cálculo Base
+        let subtotal = precioProductoActual * cantidad;
+        let totalBase = subtotal + precioExtra;
         let totalFinalUSD = totalBase;
 
-        // 4. Lógica CASHEA
+        // Lógica Cashea
         if (usarCashea) {
-            // Mostrar panel
             elPanelCashea.style.display = 'block';
-            
-            // Aplicar IVA 16% al total
-            totalFinalUSD = totalBase * 1.16;
+            totalFinalUSD = totalBase * 1.16; // +16% IVA
 
-            // Calcular Inicial
+            // Inicial
             let porcentaje = parseFloat(elPorcentaje.value) || 40;
             let montoInicialUSD = totalFinalUSD * (porcentaje / 100);
             let montoInicialBS = montoInicialUSD * tasaCambio;
 
-            // Mostrar resultados de la inicial
             document.getElementById('resInicialUSD').innerText = montoInicialUSD.toFixed(2);
             document.getElementById('resInicialBS').innerText = formatearBs(montoInicialBS);
             
-            // Mostrar etiqueta de IVA en el total general
             let divIva = document.getElementById('lblIvaUSD');
             if(divIva) divIva.style.display = 'block';
 
         } else {
-            // Ocultar panel
             elPanelCashea.style.display = 'none';
             let divIva = document.getElementById('lblIvaUSD');
             if(divIva) divIva.style.display = 'none';
         }
 
-        // 5. Calcular Total General en Bs
+        // Total Final
         let totalFinalBS = totalFinalUSD * tasaCambio;
-
-        // 6. Actualizar Totales Generales
         document.getElementById('resTotalUSD').innerText = '$' + totalFinalUSD.toFixed(2);
         document.getElementById('resTotalBS').innerText = 'Bs ' + formatearBs(totalFinalBS);
     }
 
-    // --- HELPER: Formato Venezolano ---
-    function formatearBs(valor) {
-        return valor.toLocaleString('es-VE', {minimumFractionDigits: 2, maximumFractionDigits: 2});
-    }
-
-    // --- ABRIR MODAL ---
-    function abrirCalculadoraAceite(elemento) {
-        let nombre = elemento.getAttribute('data-nombre');
-        let precio = elemento.getAttribute('data-precio');
-        let marca = elemento.getAttribute('data-marca');
-        precioAceiteActual = parseFloat(precio);
-        
-        document.getElementById('lblProductoAceite').innerText = nombre;
-        document.getElementById('lblMarcaAceite').innerText = marca;
-        document.getElementById('lblPrecioLitro').innerText = precioAceiteActual.toFixed(2);
-        
-        // Resetear valores
-        document.getElementById('txtLitros').innerText = "4"; 
-        document.getElementById('txtPrecioFiltro').innerText = "6"; 
-        document.getElementById('chkCashea').checked = false;
-        document.getElementById('txtPorcentaje').value = "40"; // Default 40%
-        
-        calcularTotalAceite();
-        if (modalAceite) modalAceite.show();
-    }
-
-    // --- CONTROL DE LITROS ---
-    function cambiarLitros(delta) {
-        let span = document.getElementById('txtLitros');
-        let val = parseInt(span.innerText) + delta;
-        if (val < 1) val = 1;
-        if (val > 16) val = 16;
-        span.innerText = val;
-        calcularTotalAceite();
-    }
-
-    // --- CONTROL DE PRECIO FILTRO ---
-    function cambiarPrecioFiltro(delta) {
-        let span = document.getElementById('txtPrecioFiltro');
-        let val = parseInt(span.innerText) + delta;
-        if (val < 0) val = 0;
-        span.innerText = val;
-        calcularTotalAceite();
-    }
-
-    // --- CONTROL DE PORCENTAJE CASHEA ---
-    function cambiarPorcentaje(delta) {
-        let input = document.getElementById('txtPorcentaje');
-        let val = parseFloat(input.value) || 0;
-        
-        // Sumamos y redondeamos para evitar errores de flotantes (ej: 30.0000004)
-        val = Math.round((val + delta) * 10) / 10;
-
-        // Límites
-        if (val < 20) val = 20;
-        if (val > 80) val = 80;
-
-        input.value = val;
-        calcularTotalAceite();
-    }
-
-    // --- FUNCIÓN 5: COPIAR PRESUPUESTO ---
+    // --- 3. COPIAR PRESUPUESTO INTELIGENTE ---
     function copiarPresupuesto(btnElement) {
-        // 1. Recopilar Datos
         let nombre = document.getElementById('lblProductoAceite').innerText;
         let marca = document.getElementById('lblMarcaAceite').innerText;
-        let litros = document.getElementById('txtLitros').innerText;
-        let totalUSD = document.getElementById('resTotalUSD').innerText; // Ya trae el signo $
+        let totalUSD = document.getElementById('resTotalUSD').innerText;
         
-        // 2. Construir el Texto Base
         let texto = `Hola, aquí tienes el presupuesto:\n`;
-        texto += `Aceite: ${marca} ${nombre} (${litros} Lts) +\n`;
-        texto += `Filtro de Aceite\n`;
+
+        if (esProductoAceite) {
+            // TEXTO PARA CAMBIO DE ACEITE
+            let litros = document.getElementById('txtLitros').innerText;
+            texto += `Aceite: ${marca} ${nombre} (${litros} Lts) +\n`;
+            texto += `Filtro de Aceite\n`;
+        } else {
+            // TEXTO PARA OTROS PRODUCTOS
+            texto += `Producto: ${marca} - ${nombre}\n`;
+        }
+
         texto += `Total: ${totalUSD}\n`;
 
-        // 3. Agregar línea de CASHEA si está activo
         if (document.getElementById('chkCashea').checked) {
             let porcentaje = document.getElementById('txtPorcentaje').value;
             let inicialRef = document.getElementById('resInicialUSD').innerText;
             texto += `Cashea (Inicial: ${porcentaje}%): $${inicialRef}\n`;
         }
 
-        // 4. Frase final de Marketing
-        texto += `Con la compra del combo el servicio es totalmente gratis 🔧`;
+        // Solo agregar la frase del servicio si es aceite
+        if (esProductoAceite) {
+            texto += `Con la compra del combo el servicio es totalmente gratis 🔧`;
+        } else {
+            texto += `Precios sujetos a cambio sin previo aviso.`;
+        }
 
-        // 5. Copiar al Portapapeles
-        // Usamos la API moderna del navegador
         navigator.clipboard.writeText(texto).then(() => {
-            
-            // FEEDBACK VISUAL (Cambiar texto del botón por 2 segundos)
             let spanTexto = document.getElementById('btnTextoCopiar');
             let textoOriginal = spanTexto.innerText;
-            
-            // Cambiar a "Copiado!" y poner verde
             spanTexto.innerText = "¡Copiado!";
             btnElement.classList.remove('btn-primary');
             btnElement.classList.add('btn-success');
-
-            // Volver a la normalidad después de 2 seg
             setTimeout(() => {
                 spanTexto.innerText = textoOriginal;
                 btnElement.classList.remove('btn-success');
                 btnElement.classList.add('btn-primary');
             }, 2000);
+        });
+    }
 
-        }).catch(err => {
-            console.error('Error al copiar: ', err);
-            alert("No se pudo copiar automáticamente. Intenta seleccionando el texto.");
+    // --- HELPERS ---
+    function formatearBs(valor) {
+        return valor.toLocaleString('es-VE', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+    }
+    function cambiarLitros(delta) {
+        let span = document.getElementById('txtLitros');
+        let val = parseInt(span.innerText) + delta;
+        if (val < 1) val = 1; if (val > 16) val = 16;
+        span.innerText = val; calcularTotal();
+    }
+    function cambiarPrecioFiltro(delta) {
+        let span = document.getElementById('txtPrecioFiltro');
+        let val = parseInt(span.innerText) + delta;
+        if (val < 0) val = 0;
+        span.innerText = val; calcularTotal();
+    }
+    function cambiarPorcentaje(delta) {
+        let input = document.getElementById('txtPorcentaje');
+        let val = Math.round((parseFloat(input.value) + delta) * 10) / 10;
+        if (val < 20) val = 20; if (val > 80) val = 80;
+        input.value = val; calcularTotal();
+    }
+
+    // --- LÓGICA DEL BUSCADOR (LUPA Y X) ---
+    // Coloca esto dentro del evento DOMContentLoaded o al final del script
+    
+    const searchInput = document.getElementById('searchInput');
+    const btnClear = document.getElementById('btnClear');
+    const searchForm = document.getElementById('searchForm');
+
+    if (searchInput && btnClear) {
+        
+        // 1. Función para mostrar/ocultar la X
+        function toggleClearButton() {
+            if (searchInput.value.trim() !== '') {
+                btnClear.style.display = 'block';
+            } else {
+                btnClear.style.display = 'none';
+            }
+        }
+
+        // 2. Evento al escribir
+        searchInput.addEventListener('input', toggleClearButton);
+
+        // 3. Evento al cargar la página (por si ya hay una búsqueda activa)
+        toggleClearButton();
+
+        // 4. Evento al hacer click en la X
+        btnClear.addEventListener('click', function() {
+            searchInput.value = '';       // Borra el texto visualmente
+            toggleClearButton();          // Oculta la X
+            searchInput.focus();          // Mantiene el teclado abierto (opcional)
+            searchForm.submit();          // ENVÍA EL FORMULARIO VACÍO (Resetea la búsqueda)
         });
     }
 </script>
