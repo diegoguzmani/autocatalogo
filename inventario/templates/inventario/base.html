@@ -3,40 +3,71 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Lista de Precios</title>
+    <title>AutoCatalogo</title>
+    <!-- Bootstrap 5 CDN -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Google Fonts (Inter para un look moderno) -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&display=swap" rel="stylesheet">
+    
     <style>
-        .precio-dolar { color: #198754; font-weight: bold; font-size: 1.2rem; }
-        .precio-bs { color: #0d6efd; font-weight: bold; font-size: 1.1rem; }
-        .marca-badge { background-color: #6c757d; font-size: 0.8rem; }
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f3f4f6; /* Gris muy suave, moderno */
+        }
+        .navbar {
+            backdrop-filter: blur(10px);
+            background-color: rgba(255, 255, 255, 0.95);
+        }
+        .card-product {
+            transition: transform 0.2s;
+            border: none;
+        }
+        .card-product:active {
+            transform: scale(0.98); /* Efecto de toque en celular */
+        }
+        .price-label {
+            font-size: 0.65rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: #6c757d;
+            font-weight: 600;
+        }
     </style>
 </head>
-<body class="bg-light">
-    <nav class="navbar navbar-dark bg-dark mb-3">
-        <div class="container-fluid">
-            <!-- Botón Home -->
-            <a class="navbar-brand" href="{% url 'inicio' %}">🔧 LUBRICANTES CENTAGENCA</a>
+<body>
+    
+    <!-- Navbar Minimalista (Sticky top para que siempre se vea) -->
+    <nav class="navbar navbar-light fixed-top shadow-sm px-3">
+        <div class="container-fluid d-flex justify-content-between align-items-center">
+            <a class="navbar-brand fw-bold text-dark d-flex align-items-center gap-2" href="{% url 'inicio' %}">
+                <span class="bg-dark text-white rounded px-2 py-0">AC</span> AutoCatalogo
+            </a>
             
-            <div>
-                <!-- Botón Calculadora (NUEVO) -->
-                <a href="{% url 'calculadora' %}" class="btn btn-warning btn-sm me-2">
+            <div class="d-flex gap-2">
+                <a href="{% url 'calculadora' %}" class="btn btn-warning btn-sm rounded-pill px-3 fw-bold">
                     🧮 Calc
                 </a>
-                
-                <!-- Botón Admin -->
-                <a href="{% url 'panel_carga' %}" class="btn btn-outline-light btn-sm">
-                    ⚙️ Admin
+                <a href="{% url 'panel_carga' %}" class="btn btn-light btn-sm rounded-pill px-3 border">
+                    ⚙️
                 </a>
             </div>
         </div>
     </nav>
-    <div class="container">
+
+    <!-- Espacio para compensar el navbar fijo -->
+    <div style="padding-top: 80px;"></div>
+
+    <div class="container pb-5">
         {% if messages %}
             {% for message in messages %}
-                <div class="alert alert-info">{{ message }}</div>
+                <div class="alert alert-{{ message.tags }} shadow-sm border-0 rounded-3 mb-4">{{ message }}</div>
             {% endfor %}
         {% endif %}
+        
         {% block content %}{% endblock %}
     </div>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>
