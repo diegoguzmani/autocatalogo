@@ -145,9 +145,18 @@
 
                 <!-- 2. PRECIO DEL FILTRO -->
                 <label class="fw-bold text-muted small mb-1">PRECIO FILTRO ($)</label>
-                <div class="input-group mb-3 shadow-sm">
-                    <span class="input-group-text bg-white border-0">$</span>
-                    <input type="number" id="txtPrecioFiltro" class="form-control border-0 form-control-lg" placeholder="0" oninput="calcularTotalAceite()">
+                <div class="bg-white p-2 rounded-3 shadow-sm mb-3 d-flex justify-content-between align-items-center">
+                    <!-- Botón Restar -->
+                    <button class="btn btn-outline-secondary rounded-circle" style="width:40px; height:40px;" onclick="cambiarPrecioFiltro(-1)">➖</button>
+                    
+                    <!-- Visualizador del Precio -->
+                    <div class="d-flex align-items-center">
+                        <span class="text-muted me-1 fs-5">$</span>
+                        <span class="h2 mb-0 fw-bold text-dark" id="txtPrecioFiltro">6</span>
+                    </div>
+                    
+                    <!-- Botón Sumar -->
+                    <button class="btn btn-outline-primary rounded-circle" style="width:40px; height:40px;" onclick="cambiarPrecioFiltro(1)">➕</button>
                 </div>
 
                 <!-- 3. OPCIÓN CASHEA -->
@@ -188,13 +197,10 @@
 <script>
     // --- VARIABLES GLOBALES ---
     let precioAceiteActual = 0;
-    // Aseguramos que la tasa se lea bien (cambiando coma por punto para JS)
+    // Leemos la tasa (asegurando punto decimal)
     let tasaCambio = parseFloat("{{ config.tasa_dolar }}".replace(',', '.')) || 0;
-    
-    // Variable para el modal
     let modalAceite = null;
 
-    // Inicializar cuando la página cargue
     document.addEventListener('DOMContentLoaded', function() {
         const modalElement = document.getElementById('modalAceite');
         if (modalElement) {
@@ -202,42 +208,38 @@
         }
     });
 
-    // --- FUNCIÓN 1: CALCULAR TOTALES (La que te faltaba) ---
+    // --- FUNCIÓN 1: CALCULAR TOTALES ---
     function calcularTotalAceite() {
-        // Obtener valores del DOM
         let elLitros = document.getElementById('txtLitros');
         let elPrecioFiltro = document.getElementById('txtPrecioFiltro');
         let elCheckCashea = document.getElementById('chkCashea');
         
-        // Validar que existan los elementos (seguridad)
         if (!elLitros || !elPrecioFiltro) return;
 
+        // OJO: Ahora usamos .innerText porque es un <span>, no un input
         let litros = parseInt(elLitros.innerText) || 4;
-        let precioFiltro = parseFloat(elPrecioFiltro.value) || 0;
+        let precioFiltro = parseFloat(elPrecioFiltro.innerText) || 0; 
         let usarCashea = elCheckCashea.checked;
 
-        // Subtotales
+        // Cálculos
         let subtotalAceite = precioAceiteActual * litros;
         let totalBase = subtotalAceite + precioFiltro;
 
-        // Aplicar CASHEA (IVA 16%)
         let totalFinalUSD = totalBase;
         let divIva = document.getElementById('lblIvaUSD');
         
         if (usarCashea) {
-            totalFinalUSD = totalBase * 1.16;
+            totalFinalUSD = totalBase * 1.16; // +16% IVA
             if(divIva) divIva.style.display = 'block';
         } else {
             if(divIva) divIva.style.display = 'none';
         }
 
-        // Calcular Bolívares
         let totalFinalBS = totalFinalUSD * tasaCambio;
 
-        // Mostrar en pantalla
+        // Mostrar Resultados
         document.getElementById('resTotalUSD').innerText = '$' + totalFinalUSD.toFixed(2);
         
-        // Formato Venezolano para Bs
         document.getElementById('resTotalBS').innerText = 'Bs ' + totalFinalBS.toLocaleString('es-VE', {
             minimumFractionDigits: 2, 
             maximumFractionDigits: 2
@@ -246,44 +248,44 @@
 
     // --- FUNCIÓN 2: ABRIR EL MODAL ---
     function abrirCalculadoraAceite(elemento) {
-        // Leemos los datos del botón
         let nombre = elemento.getAttribute('data-nombre');
         let precio = elemento.getAttribute('data-precio');
 
-        // Guardamos el precio en la variable global
         precioAceiteActual = parseFloat(precio);
         
-        // Rellenamos el modal con los datos
         document.getElementById('lblProductoAceite').innerText = nombre;
         document.getElementById('lblPrecioLitro').innerText = precioAceiteActual.toFixed(2);
         
-        // Reseteamos valores
+        // --- VALORES POR DEFECTO ---
         document.getElementById('txtLitros').innerText = "4"; 
-        document.getElementById('txtPrecioFiltro').value = "";
+        document.getElementById('txtPrecioFiltro').innerText = "6"; // Empieza en $6
         document.getElementById('chkCashea').checked = false;
         
-        // Ejecutamos cálculo inicial
         calcularTotalAceite();
         
-        // Mostramos el modal
-        if (modalAceite) {
-            modalAceite.show();
-        } else {
-            console.error("Error: El modal no se inicializó correctamente.");
-        }
+        if (modalAceite) modalAceite.show();
     }
 
-    // --- FUNCIÓN 3: CAMBIAR LITROS (+ / -) ---
+    // --- FUNCIÓN 3: CAMBIAR LITROS ---
     function cambiarLitros(delta) {
-        let spanLitros = document.getElementById('txtLitros');
-        let cantidad = parseInt(spanLitros.innerText) + delta;
+        let span = document.getElementById('txtLitros');
+        let val = parseInt(span.innerText) + delta;
+        if (val < 1) val = 1;   // Mínimo 1 litro
+        if (val > 16) val = 16; // Máximo razonable
+        span.innerText = val;
+        calcularTotalAceite();
+    }
+
+    // --- FUNCIÓN 4: CAMBIAR PRECIO FILTRO (NUEVA) ---
+    function cambiarPrecioFiltro(delta) {
+        let span = document.getElementById('txtPrecioFiltro');
+        let val = parseInt(span.innerText) + delta;
         
-        // Restricción: Mínimo 1, Máximo 16
-        if (cantidad < 1) cantidad = 1;
-        if (cantidad > 16) cantidad = 16;
+        if (val < 0) val = 0;   // No precios negativos
+        // Puedes poner un máximo si quieres (ej: if (val > 50) val = 50;)
         
-        spanLitros.innerText = cantidad;
-        calcularTotalAceite(); // Recalcular al cambiar cantidad
+        span.innerText = val;
+        calcularTotalAceite();
     }
 </script>
 {% endblock %}

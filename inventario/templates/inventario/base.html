@@ -2,7 +2,7 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Lubricantes Centagenca</title>
     <!-- Bootstrap 5 CDN -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
@@ -18,6 +18,16 @@
             backdrop-filter: blur(10px);
             background-color: rgba(255, 255, 255, 0.95);
         }
+        /* --- ESTO ES LO NUEVO --- */
+        .btn {
+            /* 1. Evita el zoom al hacer doble tap rápido */
+            touch-action: manipulation; 
+            
+            /* 2. Evita que se seleccione el texto del botón al tocar rápido */
+            -webkit-user-select: none; /* Safari / Chrome */
+            user-select: none;         /* Estándar */
+        }
+        /* ------------------------ */
         .card-product {
             transition: transform 0.2s;
             border: none;
