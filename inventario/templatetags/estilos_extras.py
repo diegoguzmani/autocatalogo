@@ -60,3 +60,24 @@ def formato_ve(valor):
         return texto.replace(',', '_').replace('.', ',').replace('_', '.')
     except (ValueError, TypeError):
         return valor
+    
+@register.filter
+def es_aceite_litro(nombre_producto):
+    """
+    Detecta si es aceite buscando:
+    1. Que tenga indicación de viscosidad (W) Y indicación de litro (LT, LITRO, 1L).
+    2. O palabras clave específicas.
+    """
+    nombre = nombre_producto.upper()
+    
+    # Palabras que indican volumen de 1 litro
+    indicadores_litro = ["LT", "LITRO", "1L", "1 L"]
+    
+    # Palabras que indican aceite de motor
+    indicadores_tipo = ["MINERAL", "SINTETICO", "SEMISINTETICO", "SEMI-SINTETICO", "SEMI SINTETICO" "20W50", "15W40", "10W30", "10W40", "5W30", "5W40", "25W60"]
+
+    # Lógica: Debe tener al menos UN indicador de litro Y al menos UN indicador de tipo
+    tiene_litro = any(i in nombre for i in indicadores_litro)
+    tiene_tipo = any(i in nombre for i in indicadores_tipo)
+
+    return tiene_litro and tiene_tipo
