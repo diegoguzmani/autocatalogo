@@ -54,29 +54,38 @@
                     <hr class="opacity-10 my-2">
 
                     <!-- GRID DE PRECIOS (Lo importante) -->
-                    <div class="row g-2 text-center mt-1">
+                    <div class="row g-0 mt-2 border rounded-3 overflow-hidden">
                         
-                        <!-- 1. PRECIO CASH -->
-                        <div class="col-4 border-end">
-                            <div class="price-label text-success">CASH / ZELLE</div>
-                            <div class="h4 mb-0 fw-bold text-success">
+                        <!-- 1. PRECIO CASH (Mitad en celular, Tercio en PC) -->
+                        <div class="col-6 col-md-4 border-end p-2 text-center bg-white">
+                            <div class="price-label text-success mb-1">CASH ($)</div>
+                            <div class="h5 mb-0 fw-bold text-success text-nowrap">
                                 ${{ p.precio_cash|formato_ve }}
                             </div>
                         </div>
 
-                        <!-- 2. PRECIO BASE (REFERENCIA) -->
-                        <div class="col-4 border-end">
-                            <div class="price-label">BASE ($)</div>
-                            <div class="h4 mb-0 fw-normal text-secondary">
+                        <!-- 2. PRECIO BASE (Mitad en celular, Tercio en PC) -->
+                        <div class="col-6 col-md-4 border-end-md p-2 text-center bg-white">
+                            <div class="price-label text-secondary mb-1">BASE ($)</div>
+                            <div class="h5 mb-0 fw-normal text-secondary text-nowrap">
                                 ${{ p.precio_base_bs|formato_ve }}
                             </div>
                         </div>
 
-                        <!-- 3. PRECIO BOLIVARES -->
-                        <div class="col-4">
-                            <div class="price-label text-dark">BOLÍVARES</div>
-                            <div class="h4 mb-0 fw-bold text-dark">
-                                {{ p.precio_en_bs|formato_ve }}
+                        <!-- 3. PRECIO BS (Ancho completo en celular, Tercio en PC) -->
+                        <!-- 
+                           Explicación de clases:
+                           col-12: Ocupa todo el ancho en celular.
+                           col-md-4: Ocupa 1/3 en PC.
+                           border-top: Línea arriba (para separar de los dólares en celular).
+                           border-top-md-0: Quita la línea de arriba en PC.
+                           border-start-md: Pone línea a la izquierda en PC.
+                           bg-light: Fondo gris muy suave para resaltarlo.
+                        -->
+                        <div class="col-12 col-md-4 border-top border-top-md-0 border-start-md p-2 text-center bg-light">
+                            <div class="price-label text-dark mb-1">BOLÍVARES</div>
+                            <div class="h4 mb-0 fw-bold text-dark text-nowrap">
+                                Bs. {{ p.precio_en_bs|formato_ve }}
                             </div>
                         </div>
 
