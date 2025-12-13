@@ -60,6 +60,7 @@
                     <button class="btn btn-sm btn-outline-primary rounded-pill w-100 mb-2 fw-bold d-flex align-items-center justify-content-center gap-2" 
                             type="button"
                             data-nombre="{{ p.nombre }}"
+                            data-marca="{{ p.marca }}"
                             data-precio="{{ p.precio_base_bs|stringformat:'f' }}"
                             onclick="abrirCalculadoraAceite(this)">
                         🛢️ Calcular Cambio de Aceite
@@ -127,6 +128,9 @@
             <!-- Encabezado con degradado suave -->
             <div class="modal-header border-0 text-white" style="background: linear-gradient(135deg, #0d6efd, #0dcaf0);">
                 <div>
+                    <!-- AQUÍ ESTÁ LA MARCA -->
+                    <span id="lblMarcaAceite" class="badge bg-white text-primary shadow-sm mb-1 text-uppercase">MARCA</span>
+                    
                     <h5 class="modal-title fw-bold" id="lblProductoAceite">Aceite</h5>
                     <small class="opacity-75">Precio Base/Litro: $<span id="lblPrecioLitro">0</span></small>
                 </div>
@@ -311,9 +315,11 @@
     function abrirCalculadoraAceite(elemento) {
         let nombre = elemento.getAttribute('data-nombre');
         let precio = elemento.getAttribute('data-precio');
+        let marca = elemento.getAttribute('data-marca');
         precioAceiteActual = parseFloat(precio);
         
         document.getElementById('lblProductoAceite').innerText = nombre;
+        document.getElementById('lblMarcaAceite').innerText = marca;
         document.getElementById('lblPrecioLitro').innerText = precioAceiteActual.toFixed(2);
         
         // Resetear valores
