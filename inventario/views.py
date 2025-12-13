@@ -54,43 +54,32 @@ def lista_precios(request):
 def panel_carga(request):
     config, _ = Configuracion.objects.get_or_create(id=1)
 
-    # CHIVATO 1: Ver si entra a la vista
-    print("--- Entrando a la vista panel_carga ---")
-
     if request.method == 'POST':
-        # CHIVATO 2: Ver qué datos envió el formulario
-        print("--- Es una solicitud POST ---")
-        print("DATOS RECIBIDOS:", request.POST)
-
-        if 'btn_tasa' in request.POST:
-            print(">>> Se detectó botón TASA")
+        
+        # --- OPCIÓN 1: TASA MANUAL (ESTO ES LO QUE ESTAMOS ARREGLANDO) ---
+        if 'btn_tasa_manual' in request.POST:
             form_tasa = TasaForm(request.POST, instance=config)
             if form_tasa.is_valid():
                 form_tasa.save()
-                messages.success(request, 'Tasa actualizada manualmente.')
-
-        # AQUI ES DONDE DEBERIA ENTRAR
+                messages.success(request, '✅ Tasas actualizadas manualmente.')
+        
+        # --- OPCIÓN 2: CARGA EXCEL ---
         elif 'btn_excel_local' in request.POST:
-            print(">>> Se detectó botón EXCEL LOCAL. Ejecutando función...")
-            resultado = procesar_excel() 
-            print(">>> Resultado de la función:", resultado)
-            
+            resultado = procesar_excel()
             if "ERROR" in resultado:
                 messages.error(request, resultado)
             else:
                 messages.success(request, resultado)
         
+        # --- OPCIÓN 3: ACTUALIZAR AUTO (Opcional) ---
         elif 'btn_actualizar_bcv' in request.POST:
-            print(">>> Se detectó botón BCV")
-            # Logica bcv...
-            pass 
-        
-        else:
-            print(">>> ALERTA: Llegó un POST pero no reconozco el botón.")
+            # (Tu código de scraping aquí...)
+            pass
 
         return redirect('panel_carga')
 
     else:
+        # Cargamos el formulario con los datos actuales
         form_tasa = TasaForm(instance=config)
 
     return render(request, 'inventario/carga.html', {
