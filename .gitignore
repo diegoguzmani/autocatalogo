@@ -15,3 +15,7 @@ __pycache__/
 
 # Opcional: Si NO quieres que tus precios sean públicos en GitHub
 # documentos/
+
+*.jpg
+
+*.xlsx

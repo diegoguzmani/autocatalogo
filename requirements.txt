@@ -6,3 +6,5 @@ beautifulsoup4
 gunicorn
 whitenoise
 tzdata
+requests
+openpyxl

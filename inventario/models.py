@@ -42,3 +42,19 @@ class Producto(models.Model):
         config = Configuracion.objects.first()
         tasa = config.tasa_dolar if config else 0
         return self.precio_base_bs * tasa
+    
+class Vehiculo(models.Model):
+    marca = models.CharField(max_length=50)        # ACURA
+    modelo = models.CharField(max_length=100)      # INTEGRA
+    motor = models.CharField(max_length=100)       # 1.8LTS
+    anio_inicio = models.IntegerField()            # 1996
+    anio_fin = models.CharField(max_length=10)     # 1999 (Char por si es "Presente" o "-")
+    
+    # Códigos de referencia (Generalmente Millard según tu data)
+    filtro_aceite = models.CharField(max_length=50, blank=True, null=True)      # ML-3593
+    filtro_aire = models.CharField(max_length=50, blank=True, null=True)        # ML-XXXX
+    filtro_combustible = models.CharField(max_length=50, blank=True, null=True)
+    filtro_cabina = models.CharField(max_length=50, blank=True, null=True)
+
+    def __str__(self):
+        return f"{self.marca} {self.modelo} ({self.anio_inicio}-{self.anio_fin})"

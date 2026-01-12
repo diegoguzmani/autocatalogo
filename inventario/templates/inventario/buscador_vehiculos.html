@@ -1,0 +1,191 @@
+{% extends 'inventario/base.html' %}
+{% load estilos_extras %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-10">
+
+        <h3 class="fw-bold mb-4 text-center">🚗 Buscador por Vehículo</h3>
+
+        <!-- BUSCADOR -->
+        <div class="card shadow-sm border-0 rounded-4 mb-5 p-3">
+            <div class="row g-3">
+                <div class="col-md-6">
+                    <label class="fw-bold small text-muted">MARCA</label>
+                    <select id="selectMarca" class="form-select form-select-lg border-0 bg-light fw-bold">
+                        <option value="">Seleccione Marca...</option>
+                        {% for m in marcas %}
+                        <option value="{{ m }}">{{ m }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-6">
+                    <label class="fw-bold small text-muted">MODELO / MOTOR / AÑO</label>
+                    <select id="selectModelo" class="form-select form-select-lg border-0 bg-light fw-bold" disabled>
+                        <option value="">Primero seleccione marca...</option>
+                    </select>
+                </div>
+                <div class="col-12">
+                    <button id="btnBuscar" class="btn btn-primary w-100 rounded-pill fw-bold py-2" disabled>
+                        🔍 BUSCAR FILTROS COMPATIBLES
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- RESULTADOS -->
+        {% if vehiculo %}
+        <div class="text-center mb-4">
+            <h4 class="fw-bold text-dark">{{ vehiculo.marca }} {{ vehiculo.modelo }}</h4>
+            <span class="badge bg-dark">{{ vehiculo.motor }}</span>
+            <span class="badge bg-secondary">{{ vehiculo.anio_inicio }} - {{ vehiculo.anio_fin }}</span>
+        </div>
+
+        <div class="row">
+            <!-- COLUMNA ACEITE -->
+            <div class="col-md-6 mb-4">
+                <div class="card h-100 border-0 shadow-sm rounded-4">
+                    <div class="card-header bg-warning text-dark fw-bold text-center">
+                        🛢️ FILTRO DE ACEITE
+                        <br><small class="opacity-75">Ref: {{ vehiculo.filtro_aceite }}</small>
+                    </div>
+                    <div class="card-body bg-light">
+                        {% if filtros_aceite %}
+                            <div class="d-flex flex-column gap-2">
+                            {% for p in filtros_aceite %}
+                                <!-- REUTILIZAMOS TU TARJETA DE PRODUCTO PERO MINI -->
+                                <div class="card shadow-sm border-0">
+                                    <div class="card-body p-2">
+                                        <div class="d-flex justify-content-between">
+                                            <small class="badge bg-secondary">{{ p.marca }}</small>
+                                            <small class="fw-bold text-primary">{{ p.codigo }}</small>
+                                            
+                                        </div>
+                                        <div class="fw-bold text-dark small">{{ p.nombre }}</div>
+                                        <div class="d-flex justify-content-between mt-1 align-items-end">
+                                            <span class="text-success fw-bold">${{ p.precio_base_bs }}</span>
+                                            <span class="text-dark fw-bold small">Bs {{ p.precio_en_bs|formato_ve }}</span>
+                                        </div>
+                                        <!-- BOTÓN PARA ABRIR EL MODAL QUE YA TIENES -->
+                                        <button class="btn btn-sm btn-outline-dark w-100 mt-2 rounded-pill"
+                                            type="button"
+                                            data-nombre="{{ p.nombre }}"
+                                            data-marca="{{ p.marca }}"
+                                            data-precio="{{ p.precio_base_bs|stringformat:'f' }}"
+                                            onclick="abrirModalDesdeBuscador(this)">
+                                            💳 Cotizar
+                                        </button>
+                                    </div>
+                                </div>
+                            {% endfor %}
+                            </div>
+                        {% else %}
+                            <div class="text-center text-muted py-3">
+                                No tenemos stock compatible con la referencia <b>{{ vehiculo.filtro_aceite }}</b>
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+
+            <!-- COLUMNA AIRE -->
+            <div class="col-md-6 mb-4">
+                <div class="card h-100 border-0 shadow-sm rounded-4">
+                    <div class="card-header bg-info text-white fw-bold text-center">
+                        💨 FILTRO DE AIRE
+                        <br><small class="opacity-75">Ref: {{ vehiculo.filtro_aire }}</small>
+                    </div>
+                    <div class="card-body bg-light">
+                        {% if filtros_aire %}
+                            <div class="d-flex flex-column gap-2">
+                            {% for p in filtros_aire %}
+                                <!-- TARJETA MINI -->
+                                <div class="card shadow-sm border-0">
+                                    <div class="card-body p-2">
+                                        <div class="d-flex justify-content-between">
+                                            <small class="fw-bold text-primary">{{ p.codigo }}</small>
+                                            <small class="badge bg-secondary">{{ p.marca }}</small>
+                                        </div>
+                                        <div class="fw-bold text-dark small">{{ p.nombre }}</div>
+                                        <div class="d-flex justify-content-between mt-1 align-items-end">
+                                            <span class="text-success fw-bold">${{ p.precio_base_bs }}</span>
+                                            <span class="text-dark fw-bold small">Bs {{ p.precio_en_bs|formato_ve }}</span>
+                                        </div>
+                                         <button class="btn btn-sm btn-outline-dark w-100 mt-2 rounded-pill"
+                                            type="button"
+                                            data-nombre="{{ p.nombre }}"
+                                            data-marca="{{ p.marca }}"
+                                            data-precio="{{ p.precio_base_bs|stringformat:'f' }}"
+                                            onclick="abrirModalDesdeBuscador(this)">
+                                            💳 Cotizar
+                                        </button>
+                                    </div>
+                                </div>
+                            {% endfor %}
+                            </div>
+                        {% else %}
+                            <div class="text-center text-muted py-3">
+                                No tenemos stock compatible con la referencia <b>{{ vehiculo.filtro_aire }}</b>
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+
+    </div>
+</div>
+
+<!-- JAVASCRIPT PARA LOS SELECTS -->
+<script>
+    const selectMarca = document.getElementById('selectMarca');
+    const selectModelo = document.getElementById('selectModelo');
+    const btnBuscar = document.getElementById('btnBuscar');
+
+    selectMarca.addEventListener('change', function() {
+        const marca = this.value;
+        selectModelo.innerHTML = '<option value="">Cargando...</option>';
+        selectModelo.disabled = true;
+        btnBuscar.disabled = true;
+
+        if(marca) {
+            fetch(`/api/modelos/?marca=${encodeURIComponent(marca)}`)
+                .then(response => response.json())
+                .then(data => {
+                    selectModelo.innerHTML = '<option value="">Seleccione Modelo...</option>';
+                    data.forEach(item => {
+                        const texto = `${item.modelo} - ${item.motor} (${item.anio_inicio}-${item.anio_fin})`;
+                        selectModelo.innerHTML += `<option value="${item.id}">${texto}</option>`;
+                    });
+                    selectModelo.disabled = false;
+                });
+        }
+    });
+
+    selectModelo.addEventListener('change', function() {
+        btnBuscar.disabled = !this.value;
+    });
+
+    btnBuscar.addEventListener('click', function() {
+        const id = selectModelo.value;
+        if(id) {
+            window.location.href = `?vehiculo_id=${id}`;
+        }
+    });
+    
+    // Función puente corregida
+    function abrirModalDesdeBuscador(elemento) {
+        // Leer datos del botón de forma segura
+        let nombre = elemento.getAttribute('data-nombre');
+        let marca = elemento.getAttribute('data-marca');
+        
+        // Redirigir al inicio buscando ese código específico para poder usar la calculadora completa
+        // Esto es un truco inteligente: Mandamos al usuario a la calculadora principal con el producto ya buscado.
+        
+        // Extraemos el código del nombre (asumiendo que el nombre es ej: "FILTRO WIX 3387")
+        // O simplemente buscamos por el nombre completo
+        window.location.href = "/?q=" + encodeURIComponent(nombre);
+    }
+</script>
+{% endblock %}

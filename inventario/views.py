@@ -6,6 +6,57 @@ from .models import Producto, Configuracion
 from .forms import TasaForm
 from .logica_excel import procesar_excel
 from .utils import obtener_tasa_bcv # Tu script
+from .models import Vehiculo # Importa el nuevo modelo
+from .utils import extraer_numero_filtro
+from .logica_vehiculos import cargar_base_datos_vehiculos  # <--- AGREGAR ESTO
+
+def buscador_vehiculos(request):
+    config, _ = Configuracion.objects.get_or_create(id=1)
+    
+    # 1. Obtener listas para los Selects (Marcas disponibles)
+    marcas = Vehiculo.objects.values_list('marca', flat=True).distinct().order_by('marca')
+    
+    resultados_aceite = []
+    resultados_aire = []
+    vehiculo_seleccionado = None
+
+    if request.method == 'GET' and 'vehiculo_id' in request.GET:
+        vehiculo_id = request.GET.get('vehiculo_id')
+        if vehiculo_id:
+            vehiculo_seleccionado = Vehiculo.objects.get(id=vehiculo_id)
+            
+            # --- BUSCAR FILTRO DE ACEITE ---
+            if vehiculo_seleccionado.filtro_aceite:
+                clave = extraer_numero_filtro(vehiculo_seleccionado.filtro_aceite)
+                # Buscamos en tu inventario productos que contengan ese número (ej: 3593)
+                # Y que sean de la categoría Filtros (opcional, si quieres ser estricto)
+                if clave:
+                    resultados_aceite = Producto.objects.filter(
+                        Q(codigo__icontains=clave) | Q(nombre__icontains=clave)
+                    )
+
+            # --- BUSCAR FILTRO DE AIRE ---
+            if vehiculo_seleccionado.filtro_aire:
+                clave = extraer_numero_filtro(vehiculo_seleccionado.filtro_aire)
+                if clave:
+                    resultados_aire = Producto.objects.filter(
+                        Q(codigo__icontains=clave) | Q(nombre__icontains=clave)
+                    )
+
+    return render(request, 'inventario/buscador_vehiculos.html', {
+        'marcas': marcas,
+        'vehiculo': vehiculo_seleccionado,
+        'filtros_aceite': resultados_aceite,
+        'filtros_aire': resultados_aire,
+        'config': config
+    })
+
+# API PEQUEÑA PARA LLENAR LOS COMBOS CON JAVASCRIPT
+from django.http import JsonResponse
+def api_modelos(request):
+    marca = request.GET.get('marca')
+    modelos = Vehiculo.objects.filter(marca=marca).values('id', 'modelo', 'motor', 'anio_inicio', 'anio_fin').order_by('modelo')
+    return JsonResponse(list(modelos), safe=False)
 
 # inventario/views.py
 
@@ -66,6 +117,13 @@ def panel_carga(request):
         # --- OPCIÓN 2: CARGA EXCEL ---
         elif 'btn_excel_local' in request.POST:
             resultado = procesar_excel()
+            if "ERROR" in resultado:
+                messages.error(request, resultado)
+            else:
+                messages.success(request, resultado)
+
+        elif 'btn_carga_vehiculos' in request.POST:
+            resultado = cargar_base_datos_vehiculos()
             if "ERROR" in resultado:
                 messages.error(request, resultado)
             else:
