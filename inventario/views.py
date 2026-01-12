@@ -2,14 +2,17 @@
 from django.shortcuts import render, redirect
 from django.db.models import Q
 from django.contrib import messages
+from django.contrib.auth.decorators import login_required, user_passes_test
+
 from .models import Producto, Configuracion
 from .forms import TasaForm
 from .logica_excel import procesar_excel
-from .utils import obtener_tasa_bcv # Tu script
+from .utils import obtener_tasa_bcv, es_superuser
 from .models import Vehiculo # Importa el nuevo modelo
 from .utils import extraer_numero_filtro
 from .logica_vehiculos import cargar_base_datos_vehiculos  # <--- AGREGAR ESTO
 
+@login_required
 def buscador_vehiculos(request):
     config, _ = Configuracion.objects.get_or_create(id=1)
     
@@ -59,7 +62,7 @@ def api_modelos(request):
     return JsonResponse(list(modelos), safe=False)
 
 # inventario/views.py
-
+@login_required
 def lista_precios(request):
     config, _ = Configuracion.objects.get_or_create(id=1)
     
@@ -102,6 +105,8 @@ def lista_precios(request):
         'busqueda': query
     })
 
+@login_required
+@user_passes_test(es_superuser)
 def panel_carga(request):
     config, _ = Configuracion.objects.get_or_create(id=1)
 
@@ -145,6 +150,7 @@ def panel_carga(request):
         'tasa_actual': config.tasa_dolar
     })
 
+@login_required
 def calculadora_divisas(request):
     # Obtenemos las tasas
     config, _ = Configuracion.objects.get_or_create(id=1)

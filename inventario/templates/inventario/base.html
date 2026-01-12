@@ -61,9 +61,21 @@
                 <a href="{% url 'calculadora' %}" class="btn btn-warning btn-sm rounded-pill px-3 fw-bold">
                     🧮 Calc
                 </a>
-                <a href="{% url 'panel_carga' %}" class="btn btn-light btn-sm rounded-pill px-3 border">
-                    ⚙️
-                </a>
+                {% if user.is_superuser %}
+                    <a href="{% url 'panel_carga' %}" class="btn btn-light btn-sm rounded-pill px-3 border">
+                        ⚙️
+                    </a>
+                {% endif %}
+                
+                {% if user.is_authenticated %}
+                    <!-- Botón Salir (Para todos) -->
+                    <form action="{% url 'logout' %}" method="post" class="d-inline">
+                        {% csrf_token %}
+                        <button type="submit" class="btn btn-dark btn-sm rounded-circle shadow-sm" style="width: 32px; height: 32px; padding: 0;" title="Salir">
+                            ✕
+                        </button>
+                    </form>
+                {% endif %}
             </div>
         </div>
     </nav>

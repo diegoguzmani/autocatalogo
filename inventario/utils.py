@@ -45,3 +45,6 @@ def extraer_numero_filtro(codigo_completo):
         # Devolvemos el grupo numérico más largo (por si hay códigos tipo A1-555)
         return max(numeros, key=len)
     return ""
+
+def es_superuser(user):
+    return user.is_superuser

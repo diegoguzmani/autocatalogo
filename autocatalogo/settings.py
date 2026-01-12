@@ -56,7 +56,7 @@ ROOT_URLCONF = 'autocatalogo.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [],
+        'DIRS': [BASE_DIR / 'templates'],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
@@ -125,3 +125,13 @@ STATIC_URL = 'static/'
 
 STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
 STATICFILES_STORAGE = "whitenoise.storage.CompressedManifestStaticFilesStorage"
+
+
+# A donde vas si inicias sesión correctamente
+LOGIN_REDIRECT_URL = '/'
+
+# A donde vas si cierras sesión (te manda al login de nuevo)
+LOGOUT_REDIRECT_URL = '/accounts/login/'
+
+# Si intentas entrar a una pág protegida, te manda aquí
+LOGIN_URL = '/accounts/login/'
